@@ -50,9 +50,10 @@ export function ViewExpenseDialog({ expense, categories, open, onOpenChange }: V
     const currentExpenses = getStoredExpenses();
     const updatedExpenses = currentExpenses.filter(e => e.id !== expense.id);
     storeExpenses(updatedExpenses);
+    // Dispatch event to trigger immediate UI update
+    window.dispatchEvent(new Event('expenseUpdated'));
     setShowDeleteAlert(false);
     onOpenChange(false);
-    window.location.reload();
   }, [expense.id, onOpenChange]);
 
   return (

@@ -101,6 +101,8 @@ export function EditExpenseDialog({
     );
     
     storeExpenses(updatedExpenses);
+    // Dispatch event to trigger immediate UI update
+    window.dispatchEvent(new Event('expenseUpdated'));
     onSuccess();
   };
 

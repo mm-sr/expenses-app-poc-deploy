@@ -33,4 +33,28 @@ export interface UserPreferences {
   theme: 'light' | 'dark' | 'system';
 }
 
+export interface Profile {
+  firstName: string;
+  lastName: string;
+  email: string;
+  timezone: string;
+  currency: string;
+}
+
+export interface NotificationSettings {
+  emailNotifications: boolean;
+  budgetAlerts: boolean;
+  monthlyReport: boolean;
+}
+
+export interface SecuritySettings {
+  twoFactorEnabled: boolean;
+}
+
+export interface PreferenceSettings {
+  theme: 'light' | 'dark' | 'system';
+  compactView: boolean;
+  defaultView: 'dashboard' | 'expenses' | 'budget';
+}
+
 export type Period = 'week' | 'month' | 'year';

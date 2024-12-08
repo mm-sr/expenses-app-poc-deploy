@@ -1,20 +1,23 @@
 'use client';
 
 import { useState } from 'react';
+import { useToast } from '@/components/ui/use-toast';
+import { useSupabase } from '@/lib/hooks/useSupabase';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button'; 
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ImageIcon, Mic, PlusCircle, Upload, X } from 'lucide-react';
-import { getStoredCategories, getStoredExpenses, storeExpenses } from '@/lib/store';
+import { FileSpreadsheet, ImageIcon, Mic, PlusCircle, Upload, X } from 'lucide-react';
 import { Category, Expense } from '@/lib/types';
 import { CURRENCIES } from '@/lib/constants';
 import { AddCategoryDialog } from './AddCategoryDialog';
+import Link from 'next/link';
 
 export function AddExpenseDialog() {
   const [open, setOpen] = useState(false);
+  const { addExpense, categories } = useSupabase();
   const [receipt, setReceipt] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [amount, setAmount] = useState('');
@@ -23,8 +26,8 @@ export function AddExpenseDialog() {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState('');
   const [categoryId, setCategoryId] = useState('');
-  const categories = getStoredCategories();
   const [isListening, setIsListening] = useState(false);
+  const { toast } = useToast();
 
   const startListening = () => {
     if ('webkitSpeechRecognition' in window) {
@@ -53,25 +56,58 @@ export function AddExpenseDialog() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const newExpense: Expense = {
-      id: crypto.randomUUID(),
+    if (!categoryId) {
+      toast({
+        title: 'Error',
+        description: 'Please select a category',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const expenseData = {
       amount: parseFloat(amount),
       currency,
       description,
       categoryId,
       date: new Date(date).toISOString(),
-      notes,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      notes
     };
 
-    const currentExpenses = getStoredExpenses();
-    storeExpenses([newExpense, ...currentExpenses]);
+    try {
+      const newExpense = await addExpense(expenseData);
+      
+      if (newExpense) {
+        toast({
+          title: 'Success',
+          description: 'Expense added successfully',
+        });
+        
+        setOpen(false);
+        resetForm();
+        // Dispatch event to trigger immediate UI update
+        window.dispatchEvent(new Event('expenseUpdated'));
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Failed to add expense. Please try again.',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Error adding expense:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to add expense. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
 
-    setOpen(false);
+  const resetForm = () => {
     setAmount('');
     setDescription('');
     setDate(new Date().toISOString().split('T')[0]);
@@ -79,9 +115,6 @@ export function AddExpenseDialog() {
     setCategoryId('');
     setReceipt(null);
     setPreviewUrl(null);
-    
-    // Force reload to update the UI
-    window.location.reload();
   };
 
   const handleReceiptUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -120,7 +153,7 @@ export function AddExpenseDialog() {
           <div className="space-y-2">
             <Label className="text-sm text-muted-foreground">Quick Input Options</Label>
             <div className="grid grid-cols-2 gap-4">
-              <div className="flex items-center gap-4 h-[100px] border-2 border-dashed rounded-lg hover:bg-accent/50 transition-colors">
+              <div className="flex items-center gap-4 h-[120px] border-2 border-dashed rounded-lg hover:bg-accent/50 transition-colors">
                 {previewUrl ? (
                   <div className="relative h-full aspect-square">
                     <img
@@ -140,44 +173,42 @@ export function AddExpenseDialog() {
                   </div>
                 ) : (
                   <div className="flex items-center gap-2 px-4 w-full">
-                    <div className="p-2 bg-primary/10 rounded-full">
-                      <ImageIcon className="h-5 w-5 text-primary" />
+                    <div className="flex flex-col items-center w-full gap-2">
+                      <div className="p-3 bg-primary/10 rounded-full">
+                        <ImageIcon className="h-6 w-6 text-primary" />
+                      </div>
+                      <div className="text-center">
+                        <p className="font-medium">Scan Receipt</p>
+                        <p className="text-xs text-muted-foreground">Upload & auto-fill</p>
+                      </div>
+                      <Label
+                        htmlFor="receipt-upload"
+                        className="cursor-pointer"
+                      >
+                        <Button variant="secondary" size="sm" type="button">
+                          <Upload className="h-4 w-4" />
+                        </Button>
+                      </Label>
+                      <Input
+                        id="receipt-upload"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleReceiptUpload}
+                      />
                     </div>
-                    <div className="flex-1 min-w-0 text-left">
-                      <p className="text-sm font-medium">Scan Receipt</p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        Upload & auto-fill
-                      </p>
-                    </div>
-                    <Label
-                      htmlFor="receipt-upload"
-                      className="cursor-pointer shrink-0"
-                    >
-                      <Button variant="secondary" size="sm" type="button">
-                        <Upload className="h-4 w-4" />
-                      </Button>
-                    </Label>
-                    <Input
-                      id="receipt-upload"
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleReceiptUpload}
-                    />
                   </div>
                 )}
               </div>
-              
-              <div className="flex items-center gap-4 h-[100px] border-2 border-dashed rounded-lg hover:bg-accent/50 transition-colors">
-                <div className="flex items-center gap-2 px-4 w-full">
-                  <div className="p-2 bg-primary/10 rounded-full">
-                    <Mic className="h-5 w-5 text-primary" />
+
+              <div className="flex items-center gap-4 h-[120px] border-2 border-dashed rounded-lg hover:bg-accent/50 transition-colors">
+                <div className="flex flex-col items-center w-full gap-2">
+                  <div className="p-3 bg-primary/10 rounded-full">
+                    <Mic className="h-6 w-6 text-primary" />
                   </div>
-                  <div className="flex-1 min-w-0 text-left">
-                    <p className="text-sm font-medium">Voice Input</p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      Speak to add expense
-                    </p>
+                  <div className="text-center">
+                    <p className="font-medium">Voice Input</p>
+                    <p className="text-xs text-muted-foreground">Speak to add expense</p>
                   </div>
                   <Button 
                     variant="secondary" 
@@ -185,7 +216,7 @@ export function AddExpenseDialog() {
                     type="button" 
                     disabled={!('webkitSpeechRecognition' in window)}
                     onClick={startListening}
-                    className={isListening ? "bg-red-100 hover:bg-red-200" : ""}
+                    className={isListening ? "bg-red-100 hover:bg-red-200 mt-0" : "mt-0"}
                   >
                     {isListening ? (
                       <span className="flex items-center gap-2">
@@ -292,9 +323,19 @@ export function AddExpenseDialog() {
             />
           </div>
 
-          <Button type="submit" className="w-full mt-6">
-            Add Expense
-          </Button>
+          <div className="flex flex-col gap-2 mt-6">
+            <Button type="submit" className="w-full">
+              Add Expense
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full"
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </Button>
+          </div>
         </form>
       </DialogContent>
     </Dialog>

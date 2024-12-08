@@ -17,7 +17,7 @@ export default function ExpensesPage() {
   }, []);
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
         <Link href="/">
           <Button variant="ghost" size="icon">

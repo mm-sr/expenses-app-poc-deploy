@@ -1,6 +1,7 @@
 import { Progress } from '@/components/ui/progress';
 import { Category, Expense } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 interface BudgetProgressProps {
   category: Category;
@@ -30,8 +31,14 @@ export function BudgetProgress({ category, expenses }: BudgetProgressProps) {
       </div>
       <Progress 
         value={progress} 
-        className={isOverBudget ? "bg-destructive/20" : ""}
-        indicatorClassName={isOverBudget ? "bg-destructive" : undefined}
+        className={cn(
+          "h-2",
+          isOverBudget && "bg-destructive/20"
+        )}
+        indicatorClassName={cn(
+          "transition-all",
+          isOverBudget ? "bg-destructive" : "bg-primary"
+        )}
       />
       <div className="flex justify-end">
         <span className="text-xs text-muted-foreground">

@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Category, Expense } from '@/lib/types';
 import { BudgetProgress } from './BudgetProgress';
-import { SetBudgetDialog } from './SetBudgetDialog';
+import { ManageBudgetsDialog } from './ManageBudgetsDialog';
 import { Wallet } from 'lucide-react';
 
 interface BudgetOverviewProps {
@@ -13,7 +13,7 @@ interface BudgetOverviewProps {
   expenses: Expense[];
 }
 
-export function BudgetOverview({ categories, expenses }: BudgetOverviewProps) {
+export function BudgetOverview({ categories = [], expenses = [] }: BudgetOverviewProps) {
   const [showBudgetDialog, setShowBudgetDialog] = useState(false);
   const categoriesWithBudget = categories.filter(c => c.budget);
 
@@ -55,7 +55,7 @@ export function BudgetOverview({ categories, expenses }: BudgetOverviewProps) {
         )}
       </div>
 
-      <SetBudgetDialog
+      <ManageBudgetsDialog
         categories={categories}
         open={showBudgetDialog}
         onOpenChange={setShowBudgetDialog}

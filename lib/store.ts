@@ -1,62 +1,28 @@
 import { Category, Expense, UserPreferences } from './types';
 
 const DEFAULT_CATEGORIES: Category[] = [
-  { id: 'food', name: 'Food & Dining', color: 'hsl(var(--chart-1))', budget: 500 },
-  { id: 'transport', name: 'Transportation', color: 'hsl(var(--chart-2))', budget: 200 },
-  { id: 'utilities', name: 'Utilities', color: 'hsl(var(--chart-3))', budget: 300 },
-  { id: 'entertainment', name: 'Entertainment', color: 'hsl(var(--chart-4))', budget: 150 },
-  { id: 'shopping', name: 'Shopping', color: 'hsl(var(--chart-5))', budget: 400 },
+  // Empty array - no default categories
 ];
 
 const DEFAULT_PREFERENCES: UserPreferences = {
   currency: 'USD',
-  dateFormat: 'MM/dd/yyyy',
+  dateFormat: 'dd.MM.yyyy',
   numberFormat: 'en-US',
   theme: 'system'
 };
 
-const MOCK_EXPENSES: Expense[] = [
-  {
-    id: '1',
-    amount: 42.50,
-    currency: 'USD',
-    description: 'Groceries',
-    categoryId: 'food',
-    date: new Date().toISOString(),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: '2',
-    amount: 29.95,
-    currency: 'USD',
-    description: 'Movie tickets',
-    categoryId: 'entertainment',
-    date: new Date(Date.now() - 86400000).toISOString(),
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - 86400000).toISOString()
-  },
-  {
-    id: '3',
-    amount: 120.50,
-    currency: 'USD',
-    description: 'Electricity bill',
-    categoryId: 'utilities',
-    date: new Date(Date.now() - 172800000).toISOString(),
-    createdAt: new Date(Date.now() - 172800000).toISOString(),
-    updatedAt: new Date(Date.now() - 172800000).toISOString()
-  }
-];
+const MOCK_EXPENSES: Expense[] = [];
+
 export function getStoredExpenses(): Expense[] {
   if (typeof window === 'undefined') return [];
   const stored = localStorage.getItem('expenses');
-  return stored ? JSON.parse(stored) : MOCK_EXPENSES;
+  return stored ? JSON.parse(stored) : [];
 }
 
 export function getStoredCategories(): Category[] {
   if (typeof window === 'undefined') return DEFAULT_CATEGORIES;
   const stored = localStorage.getItem('categories');
-  return stored ? JSON.parse(stored) : DEFAULT_CATEGORIES;
+  return stored ? JSON.parse(stored) : [];
 }
 
 export function getStoredPreferences(): UserPreferences {
@@ -67,10 +33,14 @@ export function getStoredPreferences(): UserPreferences {
 
 export function storeExpenses(expenses: Expense[]): void {
   localStorage.setItem('expenses', JSON.stringify(expenses));
+  // Dispatch custom event for immediate updates
+  window.dispatchEvent(new Event('expenseUpdated'));
 }
 
 export function storeCategories(categories: Category[]): void {
   localStorage.setItem('categories', JSON.stringify(categories));
+  // Dispatch custom event for immediate updates
+  window.dispatchEvent(new Event('expenseUpdated'));
 }
 
 export function storePreferences(preferences: UserPreferences): void {

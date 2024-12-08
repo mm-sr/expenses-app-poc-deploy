@@ -1,39 +1,74 @@
 'use client';
 
 import { useState } from 'react';
+import { useSupabase } from '@/lib/hooks/useSupabase';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Plus } from 'lucide-react';
-import { getStoredCategories, storeCategories } from '@/lib/store';
-import { Category } from '@/lib/types';
+import { useToast } from '@/components/ui/use-toast';
+
+const CATEGORY_COLORS = [
+  '#FF6B6B', // Red
+  '#4ECDC4', // Teal
+  '#45B7D1', // Blue
+  '#96CEB4', // Green
+  '#FFEEAD', // Yellow
+  '#D4A5A5', // Pink
+  '#9B59B6', // Purple
+  '#3498DB', // Light Blue
+  '#E67E22', // Orange
+  '#1ABC9C', // Turquoise
+];
 
 export function AddCategoryDialog() {
   const [name, setName] = useState('');
-  const [color, setColor] = useState('#6366f1');
+  const [open, setOpen] = useState(false);
+  const { addCategory } = useSupabase();
+  const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const newCategory: Category = {
-      id: crypto.randomUUID(),
-      name,
-      color,
-    };
-
-    const currentCategories = getStoredCategories();
-    storeCategories([...currentCategories, newCategory]);
-
-    setName('');
-    setColor('#6366f1');
+    if (!name.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Please enter a category name',
+        variant: 'destructive',
+      });
+      return;
+    }
+    // Pick a random color from the predefined palette
+    const randomColor = CATEGORY_COLORS[Math.floor(Math.random() * CATEGORY_COLORS.length)];
     
-    // Close dialog by clicking the close button
-    document.querySelector<HTMLButtonElement>('[data-dialog-close]')?.click();
+    try {
+      const newCategory = await addCategory({
+        name: name.trim(),
+        color: randomColor
+      });
+      
+      if (newCategory) {
+        setOpen(false);
+        toast({
+          title: 'Success',
+          description: 'Category added successfully.',
+        });
+        setName('');
+      }
+    } catch (error: any) {
+      const errorMessage = error?.message || 'Failed to add category. Please try again.';
+      console.error('Error adding category:', errorMessage);
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="icon" className="h-8 w-8">
           <Plus className="h-4 w-4" />
@@ -54,28 +89,6 @@ export function AddCategoryDialog() {
               placeholder="Category name"
             />
           </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="color">Color</Label>
-            <div className="flex gap-2">
-              <Input
-                id="color"
-                type="color"
-                required
-                value={color}
-                onChange={(e) => setColor(e.target.value)}
-                className="w-24 p-1 h-9"
-              />
-              <Input
-                type="text"
-                value={color}
-                onChange={(e) => setColor(e.target.value)}
-                placeholder="#000000"
-                className="flex-1"
-              />
-            </div>
-          </div>
-
           <Button type="submit" className="w-full">
             Add Category
           </Button>

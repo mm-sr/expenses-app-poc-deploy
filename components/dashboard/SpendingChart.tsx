@@ -7,10 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Expense, Period } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
 
-// Move defaultAxisProps outside component to avoid recreation
-const defaultAxisProps = {
+// Default props for axes to avoid warnings
+const axisProps = {
+  scale: 'auto',
   axisLine: false,
-  tickLine: false,
+  tickLine: false
 };
 
 interface SpendingChartProps {
@@ -115,15 +116,15 @@ export function SpendingChart({ expenses }: SpendingChartProps) {
       <div className="h-[300px]">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={getChartData()}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="date" {...defaultAxisProps} />
+            <CartesianGrid strokeDasharray="3 3" {...axisProps} />
+            <XAxis dataKey="date" {...axisProps} />
             <YAxis 
               tickFormatter={(value) => formatCurrency(value, { 
                 notation: 'compact',
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 0
               })}
-              {...defaultAxisProps}
+              {...axisProps}
             />
             <Tooltip 
               formatter={(value: number) => [

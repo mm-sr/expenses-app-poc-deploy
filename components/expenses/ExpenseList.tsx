@@ -1,6 +1,6 @@
 'use client';
 
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
 import {
   Table,
   TableBody,
@@ -12,8 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Eye } from 'lucide-react';
 import { Category, Expense } from '@/lib/types';
-import { formatCurrency } from '@/lib/utils';
-import { getStoredPreferences } from '@/lib/store';
+import { formatCurrency, formatDate } from '@/lib/utils';
 import { ViewExpenseDialog } from './ViewExpenseDialog';
 import { useState } from 'react';
 
